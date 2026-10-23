@@ -1,19 +1,19 @@
-# SPIDER — Grade-Blind Residual MLP++ DDS
+# SPIDER：等级盲的 Residual MLP++ DDS
 
-This repository isolates the latest compact SPIDER severity-scoring component found in the project workspace: a grade-blind Residual MLP++ that maps frozen VAE latent features to a continuous degeneration severity score (DDS). It is a downstream scoring model; it does not train the MRI VAE or generate the 21-frame LCOVT trajectories.
+本仓库整理了 SPIDER 项目中的最新紧凑型严重程度评分模块：一个不使用真实等级标签的 Residual MLP++，将冻结 VAE 的潜在特征映射为连续退变严重程度评分（DDS）。该模块仅负责下游评分；它不会训练 MRI VAE，也不会生成 21 帧 LCOVT 轨迹。
 
-## Method
+## 方法
 
-- Converts 4,480-dimensional frozen VAE latents into a selected 384-dimensional feature representation.
-- Scores each MRI with a residual MLP: 384 → 128, two residual blocks, then 64 → 1.
-- Learns relative ordering from adjacent and sampled long-range pairs in generated grade-conditioned trajectories.
-- Selects checkpoints using validation trajectory ordering criteria.
-- Calibrates the continuous score to a 0–100 DDS range using training-set latent scores.
-- Excludes real Pfirrmann grades from model fitting, feature selection, validation checkpoint selection, and score calibration. Optional grade association is a post-freeze analysis.
+- 将 4,480 维冻结 VAE 潜在特征映射为筛选后的 384 维表示。
+- 使用残差 MLP 进行评分：384 → 128、两个残差块，再经 64 → 1 输出连续分数。
+- 在生成的等级条件轨迹中，利用相邻样本对和抽样的长距离样本对学习相对排序。
+- 根据验证集轨迹排序指标选择检查点。
+- 使用训练集潜变量分数，将连续评分校准到 0–100 的 DDS 范围。
+- 真实 Pfirrmann 等级不参与模型拟合、特征筛选、验证检查点选择或分数校准；可选的等级关联分析只在模型冻结后进行。
 
-The model has 123,905 parameters for a 384-dimensional input. The provided checkpoint bundle contains the selected model, feature normalizer, and calibration values required by the prediction command.
+模型针对 384 维输入，共有 123,905 个参数。仓库提供的检查点包含推理所需的模型、特征归一化器和校准值。
 
-## Repository layout
+## 目录结构
 
     ResidualMLP_PlusPlus_384/
     ├── residual_mlp_plusplus_dds.py
@@ -24,27 +24,27 @@ The model has 123,905 parameters for a 384-dimensional input. The provided check
         ├── feature_normalizer.npz
         └── calibration.json
 
-## Setup
+## 环境安装
 
     python -m venv .venv
-    # Activate the environment, then:
+    # 激活虚拟环境后运行：
     pip install -r ResidualMLP_PlusPlus_384/requirements.txt
 
-## Training
+## 训练
 
-Training expects separately prepared metadata, VAE latent caches, and generated 21-frame LCOVT trajectories. Those files are not included in this repository. Provide the path to your authorized local SPIDER data workspace:
+训练需要另行准备元数据、VAE 潜变量缓存以及生成的 21 帧 LCOVT 轨迹。本仓库不包含这些文件。请将环境变量指向你有权使用的本地 SPIDER 数据目录：
 
     SPIDER_ROOT=/path/to/SPIDER-data bash ResidualMLP_PlusPlus_384/run_all.sh
 
-The training script supports explicit paths for metadata, caches, and train/validation trajectory directories. Run:
+训练脚本支持显式指定元数据、缓存和训练/验证轨迹目录。可查看命令帮助：
 
     python ResidualMLP_PlusPlus_384/residual_mlp_plusplus_dds.py train --help
 
-The training workflow writes generated checkpoints, predictions, and analysis artifacts under its output directory. These are ignored by Git.
+训练流程会将新检查点、预测和分析文件写入输出目录；这些文件已由 Git 忽略。
 
-## Predict from pre-encoded latent features
+## 基于潜在特征进行预测
 
-The prediction command expects an N × 4,480 latent matrix produced by the same frozen VAE preprocessing and an N-row manifest with an `image_path` column:
+预测命令需要一个 N × 4,480 的潜变量矩阵，以及包含 `image_path` 列、共 N 行的清单文件。潜变量需由相同的冻结 VAE 预处理流程生成：
 
     python ResidualMLP_PlusPlus_384/residual_mlp_plusplus_dds.py predict \
       --model-dir ResidualMLP_PlusPlus_384/checkpoints \
@@ -53,8 +53,8 @@ The prediction command expects an N × 4,480 latent matrix produced by the same 
       --output predictions.csv \
       --device cuda
 
-The script outputs `raw_score` and calibrated `DDS`. It does not convert DICOM/JPEG images into VAE latents.
+脚本输出 `raw_score` 和校准后的 `DDS`。它不会将 DICOM/JPEG 原始图像转换为 VAE 潜变量。
 
-## Scope and interpretation
+## 项目范围与结果解释
 
-This release contains the final scoring code and its compact inference assets, not the upstream generator, source images, masks, latent caches, patient metadata, trajectory images, or experiment reports. DDS is a research score anchored to the training latent distribution; trajectory-order consistency alone does not establish clinical validity. It is not a clinical diagnostic tool.
+本仓库包含最终评分代码和紧凑推理文件，不包含上游生成模型、原始影像、掩膜、潜变量缓存、患者元数据、轨迹图像或实验报告。DDS 是锚定于训练集潜变量分布的研究评分；轨迹排序一致性本身不能证明临床有效性。该评分不能用于临床诊断。
