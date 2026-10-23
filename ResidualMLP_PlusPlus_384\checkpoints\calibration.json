@@ -1,0 +1,8 @@
+{
+  "origin": "TRAIN real MRI raw 5th/95th quantile (grade-blind)",
+  "q05": -59.37033462524414,
+  "q95": 38.521121978759766,
+  "slope": 0.06015722068734665,
+  "bias": 0.6271153431659897,
+  "mapping": "monotone sigmoid 5->95"
+}

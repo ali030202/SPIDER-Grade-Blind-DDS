@@ -58,4 +58,3 @@ The script outputs `raw_score` and calibrated `DDS`. It does not convert DICOM/J
 ## Scope and interpretation
 
 This release contains the final scoring code and its compact inference assets, not the upstream generator, source images, masks, latent caches, patient metadata, trajectory images, or experiment reports. DDS is a research score anchored to the training latent distribution; trajectory-order consistency alone does not establish clinical validity. It is not a clinical diagnostic tool.
-
